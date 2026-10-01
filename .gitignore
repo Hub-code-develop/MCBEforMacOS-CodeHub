@@ -1,0 +1,11 @@
+# 构建产物
+artifacts/
+.work/
+
+# .NET
+bin/
+obj/
+*.user
+
+# macOS
+.DS_Store

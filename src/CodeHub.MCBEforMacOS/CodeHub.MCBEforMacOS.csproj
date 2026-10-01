@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>CodeHub.MCBEforMacOS</RootNamespace>
+
+    <PackageId>CodeHub.MCBEforMacOS</PackageId>
+    <Authors>CodeHub</Authors>
+    <Description>在 macOS 上运行《我的世界》基岩版(Windows GDK 版)所需的完整自包含运行时:Wine(WineGDK 分支)+ xodus-service + MoltenVK/DXVK/vkd3d-proton。</Description>
+    <PackageTags>minecraft;bedrock;macos;wine;gdk;xodus;moltenvk;dxvk</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>LGPL-2.1-or-later</PackageLicenseExpression>
+
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);NU5100;NU5110;NU5111;NU5128</NoWarn>
+
+    <RuntimeRoot>$(MSBuildThisFileDirectory)../../artifacts/runtime/</RuntimeRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)../../buildTransitive/CodeHub.MCBEforMacOS.targets"
+          Pack="true" PackagePath="buildTransitive/CodeHub.MCBEforMacOS.targets" />
+  </ItemGroup>
+
+  <!-- 本机运行时树由 scripts/*.sh 生成,仅在做包时存在。 -->
+  <ItemGroup Condition="Exists('$(RuntimeRoot)wine')">
+    <None Include="$(RuntimeRoot)**/*"
+          Pack="true"
+          PackagePath="runtimes/osx-x64/native/%(RecursiveDir)%(Filename)%(Extension)"
+          Visible="false" />
+  </ItemGroup>
+
+  <Target Name="McbeMacOSRequireRuntime" BeforeTargets="Pack" Condition="!Exists('$(RuntimeRoot)wine')">
+    <Error Text="未找到 $(RuntimeRoot)wine,无法打包。请先执行 scripts/build-wine.sh、scripts/build-xodus-service.sh、scripts/fetch-render-stack.sh。" />
+  </Target>
+
+</Project>

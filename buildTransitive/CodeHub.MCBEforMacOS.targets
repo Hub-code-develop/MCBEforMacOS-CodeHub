@@ -1,0 +1,35 @@
+<Project>
+
+  <!--
+    本包把整个 macOS 运行时按 runtimes/osx-x64/native/<...> 随包分发。
+    NuGet 解包会丢失可执行位,因此引用方必须经过 Stage 目标再使用,不能直接执行包内文件。
+  -->
+
+  <PropertyGroup>
+    <McbeMacOSRuntimeDir Condition="'$(McbeMacOSRuntimeDir)' == ''">$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', 'runtimes', 'osx-x64', 'native'))</McbeMacOSRuntimeDir>
+    <McbeMacOSWineDir Condition="'$(McbeMacOSWineDir)' == ''">$(McbeMacOSRuntimeDir)wine/</McbeMacOSWineDir>
+    <McbeMacOSXodusServiceDir Condition="'$(McbeMacOSXodusServiceDir)' == ''">$(McbeMacOSRuntimeDir)xodus/</McbeMacOSXodusServiceDir>
+    <McbeMacOSRenderDir Condition="'$(McbeMacOSRenderDir)' == ''">$(McbeMacOSRuntimeDir)render/</McbeMacOSRenderDir>
+
+    <!-- 设为 true 时,构建后把运行时复制到 $(OutDir)mcbe-macos,供应用随包发布。 -->
+    <McbeMacOSStageRuntime Condition="'$(McbeMacOSStageRuntime)' == ''">false</McbeMacOSStageRuntime>
+    <McbeMacOSStagedDir Condition="'$(McbeMacOSStagedDir)' == ''">$(OutDir)mcbe-macos/</McbeMacOSStagedDir>
+  </PropertyGroup>
+
+  <Target Name="McbeMacOSStageRuntimeTarget"
+          AfterTargets="Build"
+          Condition="'$(McbeMacOSStageRuntime)' == 'true' and Exists('$(McbeMacOSWineDir)bin/wine')">
+    <ItemGroup>
+      <_McbeMacOSRuntimeFile Include="$(McbeMacOSRuntimeDir)**/*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_McbeMacOSRuntimeFile)"
+          DestinationFiles="@(_McbeMacOSRuntimeFile->'$(McbeMacOSStagedDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <!-- 恢复 NuGet 解包时丢失的可执行位。 -->
+    <Exec Command="chmod +x &quot;$(McbeMacOSStagedDir)wine/bin/wine&quot; &quot;$(McbeMacOSStagedDir)xodus/xodus-service&quot;" />
+    <Exec Command="find &quot;$(McbeMacOSStagedDir)wine/bin&quot; -type f -exec chmod +x {} +" />
+  </Target>
+
+</Project>
