@@ -60,6 +60,12 @@ git -C "$SRC" fetch --depth 1 -q --tags origin || true
 git config --global --add safe.directory "$SRC" || true
 echo "HEAD: $(git -C "$SRC" rev-parse HEAD)"
 
+# 上游 master 的 dlls/gameinput/padinput.c 没写进 dlls/gameinput/Makefile.in 的 SOURCES（WIP 文件，
+# 引用了尚未定义的结构体 game_input_device / game_input_reading）。make_makefiles 会把目录下所有 .c
+# 自动补进 SOURCES，于是它被编译并报 "invalid use of undefined type 'struct game_input_device'"。
+# 该文件本不属于 gameinput.dll，构建前移除。
+rm -f "$SRC/dlls/gameinput/padinput.c"
+
 log "生成 configure / Makefile / spec"
 cd "$SRC"
 ./tools/make_requests
